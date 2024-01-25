@@ -3,6 +3,7 @@
 apt update
 apt install --yes make git libgtest-dev python3-pip zip gdb gdb-doc pkgconf* linux-tools-common autoconf libtool apt-file libssl-dev
 pip3 install --user meson pyelftools ninja gdown pyinstaller
+apt --yes upgrade
 
 # wget https://github.com/Kitware/CMake/releases/download/v3.28.1/cmake-3.28.1.tar.gz
 # tar zxf ./cmake-3.28.1.tar.gz
