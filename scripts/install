@@ -1,0 +1,39 @@
+#!/bin/bash
+
+apt update
+apt install --yes make git libgtest-dev python3-pip zip gdb gdb-doc pkgconf* linux-tools-common autoconf libtool apt-file libssl-dev
+pip3 install --user meson pyelftools ninja gdown pyinstaller
+
+# wget https://github.com/Kitware/CMake/releases/download/v3.28.1/cmake-3.28.1.tar.gz
+# tar zxf ./cmake-3.28.1.tar.gz
+# rm -f ./cmake-3.28.1.tar.gz
+# cd cmake-3.28.1
+# ./bootstrap --prefix=$HOME/local  && make -j32 && make install
+
+#
+# Add variables to ~/.bashrc
+#
+echo "alias ll=\"ls -la\"" >> ${HOME}/.bashrc
+echo "alias edit=\"vi\"" >> ${HOME}/.bashrc
+echo "alias ppjson=\"python3 -m json.tool\"" >> ${HOME}/.bashrc
+echo "export PATH=.:$HOME/local/bin:$HOME/.local/bin:\$PATH" >> ${HOME}/.bashrc
+
+#
+# Add variables to .vimrc
+#
+echo "set expandtab" > ~/.vimrc
+echo "set tabstop=2" >> ~/.vimrc
+echo "set shiftwidth=2" >> ~/.vimrc
+echo "set bg=dark" >> ~/.vimrc
+echo "set noautoindent" >> ~/.vimrc
+echo "set nosmartindent" >> ~/.vimrc
+echo "set nocindent" >> ~/.vimrc
+echo "set wrap" >> ~/.vimrc
+echo ":syntax off" >> ~/.vimrc
+echo ":set colorcolumn=120" >> ~/.vimrc
+
+# git needs this
+git config --global user.email "gshanemiller6@gmail.com"
+git config --global user.name "smiller"
+git config --global credential.helper store
+git config --global credential.helper cache
