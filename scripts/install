@@ -3,13 +3,28 @@
 apt update
 apt install --yes make git libgtest-dev python3-pip zip gdb gdb-doc pkgconf* linux-tools-common autoconf libtool apt-file libssl-dev
 pip3 install --user meson pyelftools ninja gdown pyinstaller
-apt --yes upgrade
 
-# wget https://github.com/Kitware/CMake/releases/download/v3.28.1/cmake-3.28.1.tar.gz
-# tar zxf ./cmake-3.28.1.tar.gz
-# rm -f ./cmake-3.28.1.tar.gz
-# cd cmake-3.28.1
-# ./bootstrap --prefix=$HOME/local  && make -j32 && make install
+mkdir $HOME/dev
+cd $HOME/dev
+
+# modules requires LAG cmake
+wget https://github.com/Kitware/CMake/releases/download/v3.28.1/cmake-3.28.1.tar.gz
+tar zxf ./cmake-3.28.1.tar.gz
+rm -f ./cmake-3.28.1.tar.gz
+cd cmake-3.28.1
+./bootstrap --prefix=$HOME/local  && make -j32 && make install
+cd ..
+rm -rf make-3.28.1
+
+# install clang-16 which is not on std 22.04 apt repo lists
+# https://askubuntu.com/questions/1473403/how-to-install-clang-16-on-22-04-lts
+wget https://apt.llvm.org/llvm.sh
+chmod +x llvm.sh
+./llvm.sh 16
+rm -f ./llvm.sh
+
+# mop up
+apt --yes upgrade
 
 #
 # Add variables to ~/.bashrc
