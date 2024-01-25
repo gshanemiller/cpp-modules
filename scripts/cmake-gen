@@ -1,0 +1,149 @@
+#!/usr/bin/python3
+
+import json
+
+PILLAR_GITREPO="https://nyse.org/"
+CPUMODE = ["native"]
+ARCHMODE = ["x86_64"]
+BUILDMODE = ["release", "release-stripped", "release-assert", "release-assert-stripped", "debug", "debug-stripped"]
+
+class BuildConfig:
+  def __init__(self, cpu=None, arch=None, buildMode=None):
+    if cpu is not None:
+      if cpu not in CPUMODE:
+        raise Exception("buidMode cpu {0} unknown".format(cpu));
+      self.arch = arch
+    else:
+      self.cpu = CPUMODE[0]
+
+    if arch is not None:
+      if arch not in ARCHMODE:
+        raise Exception("buidMode architecture {0} unknown".format(arch));
+      self.arch = arch
+    else:
+      self.arch = ARCHMODE[0]
+
+    if buildMode is not None:
+      if buildMode not in BUILDMODE:
+        raise Exception("buidMode {0} unknown".format(buildMode));
+      self.buildMode = buildMode
+    else:
+      self.buildMode = BUILDMODE[0]
+
+    self.buildDefns = {}
+    self.buildSwitches = {}
+    self.buildIncludeDirs = {}
+    self.buildLinkDefns = {}
+    self.buildLinkSwitches = {}
+    self.buildLibDirs = {}
+
+  def __str__(self):
+    return "{0}-{1}-{2}".format(self.arch, self.cpu, self.buildMode)
+
+  def json(self):
+    return json.dumps(self.__dict__, default=lambda o: o.__dict__, indent=2) 
+
+class Project:
+  def __init__(self, name, buildMode=None):
+    if name is None or len(name)==0:
+      raise Exception("project name is none or empty");
+
+    if buildMode is None:
+      self.buildMode = BuildConfig()
+    elif buildMode not in instanceof(buildMode, BuildConfig):
+      raise Exception("project {0} buildMode is invalid".format(name))
+
+    self.name = name
+    self.library = {}
+    self.task = {}
+    self.unitTest = {}
+    self.integrationTest = {} 
+
+  def __str__(self):
+    return "{0}:{1}".format(self.name, self.buildMode)
+
+  def addLibrary(lib):
+    name = "{0}".format(lib)
+    if not isinstance(lib, Library):
+      raise Exception("project {0} cannot depend on a non-library dependency {1}".format(self, lib))
+    if name in self.library:
+      raise Exception("project {0} already depends on {1}".format(self.name, name))
+    self.library[name] = lib
+
+  def json(self):
+    return json.dumps(self.__dict__, default=lambda o: o.__dict__, indent=2) 
+
+class Library:
+  def __init__(self, project, name, majorVersion=0, minorVersion=0, revision=1, gitHubUrl=None, sourceUrl=None):
+    if project is None or not isinstance(project, Project):
+      raise Exception("library {0} parent is not a Project {1}".format(self, parent))
+    if name is None or len(name)==0:
+      raise Exception("library name is none or empty");
+    if majorVersion<0 or majorVersion<0 or majorVersion<0:
+      raise Exception("library {0} version {1}.{2}.{3} is invalid".format(
+        name, majorVersion, minorVersion, revision))
+    if gitHubUrl is None and sourceUrl is None:
+      raise Exception("library {0} version {1}.{2}.{3} requires a Git URL or source URL".format(
+        name, majorVersion, minorVersion, revision))
+    if gitHubUrl is not None and sourceUrl is not None:
+      raise Exception("library {0} version {1}.{2}.{3} requires either a Git URL or source URL not both".format(
+        name, majorVersion, minorVersion, revision))
+
+    self.project = project
+    self.name = name
+    self.majorVersion = majorVersion
+    self.minorVersion = minorVersion
+    self.revision = revision
+    self.dependency = {}
+    self.buildMode = None
+
+    if gitHubUrl is None:
+      self.gitHubUrl = ""
+    elif len(gitHubUrl)==0:
+      self.gitHubUrl = "{0}/{1}/refs/tags/v{2}.{3}.{4}".format(PILLAR_GITREPO, name, majorVersion, minorVersion,
+        revision)
+    else:
+      self.gitHubUrl = gitHubUrl
+
+    if sourceUrl is not None:
+      tag = ("/src/lib/{0}".format(name))
+      index = sourceUrl.find(tag)
+      if index<=0 or index+len(tag)!=len(sourceUrl):
+        raise Exception("library {0} sourceUrl {1} version {2}.{3}.{4} is empty or does not have suffix {5}".format(
+          name, sourceUrl, majorVersion, minorVersion, revision, tag))
+      self.sourceUrl = sourceUrl 
+
+  def setBuildMode(self, buildMode):
+    if not isinstance(buildMode, BuildConfig):
+      raise Exception("invalid buildMode {0} for library {1}".format(buildMode, self))
+    self.buildMode = buildMode
+      
+  def addDependency(self, lib):
+    name = "{0}".format(lib)
+    if not isinstance(lib, Library):
+      raise Exception("library {0} cannot depend on a non-library dependency {1}".format(self, lib))
+    if name in self.dependency:
+      raise Exception("library {0} already depends on {1}".format(self.name, name))
+    self.dependency[name] = lib
+
+  def __str__(self):
+    if len(self.gitHubUrl)>0:
+      return self.gitHubUrl
+    else:
+      return "{0}:v{1}.{2}.{3}:{4}".format(self.name, self.majorVersion,
+        self.minorVersion, self.revision, self.sourceUrl)
+
+  def json(self):
+    return json.dumps(self.__dict__, default=lambda o: o.__dict__, indent=2) 
+
+mode = BuildConfig()
+proj = Project("example1")
+liba = Library(proj, "logger", sourceUrl="/abbey.master/src/lib/logger")
+libb = Library(proj, "multiplier", sourceUrl="/abbey.master/src/lib/multiplier")
+liba.addDependency(libb)
+liba.setBuildMode(mode)
+print(proj)
+print(liba)
+
+obj = liba.json()
+print(obj)
