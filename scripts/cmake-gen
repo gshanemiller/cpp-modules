@@ -2,10 +2,11 @@
 
 import json
 
-PILLAR_GITREPO="https://nyse.org/"
 CPUMODE = ["native"]
 ARCHMODE = ["x86_64"]
 BUILDMODE = ["release", "release-stripped", "release-assert", "release-assert-stripped", "debug", "debug-stripped"]
+
+PILLAR_GITREPO="https://nyse.org/"
 
 class BuildConfig:
   def __init__(self, cpu=None, arch=None, buildMode=None):
@@ -30,18 +31,39 @@ class BuildConfig:
     else:
       self.buildMode = BUILDMODE[0]
 
-    self.buildDefns = {}
-    self.buildSwitches = {}
-    self.buildIncludeDirs = {}
-    self.buildLinkDefns = {}
-    self.buildLinkSwitches = {}
-    self.buildLibDirs = {}
+    self.compileDefn = []
+    self.compileSwitch = []
+    self.compileIncludeDir = []
+    self.linkDefn = []
+    self.linkSwitches = []
+    self.linkDir = []
 
   def __str__(self):
     return "{0}-{1}-{2}".format(self.arch, self.cpu, self.buildMode)
 
-  def json(self):
-    return json.dumps(self.__dict__, default=lambda o: o.__dict__, indent=2) 
+  def addCompileDefn(self, opt):
+    if opt is not None and opt not in self.compileDefn:
+      self.compileDefn.append(opt)
+
+  def addCompileSwitch(self, opt):
+    if opt is not None and opt not in self.compileSwitch:
+      self.compileSwitch.append(opt)
+
+  def addCompileIncludeDir(self, opt):
+    if opt is not None and opt not in self.compileIncludeDir:
+      self.compileIncludeDir.append(opt)
+
+  def addLinkDefn(self, opt):
+    if opt is not None and opt not in self.linkDefn:
+      self.linkDefn.append(opt)
+
+  def addLinkSwitch(self, opt):
+    if opt is not None and opt not in self.linkSwitch:
+      self.linkSwitch.append(opt)
+
+  def addLinkDir(self, opt):
+    if opt is not None and opt not in self.LinkDir:
+      self.linkDir.append(opt)
 
 class Project:
   def __init__(self, name, buildMode=None):
@@ -62,16 +84,13 @@ class Project:
   def __str__(self):
     return "{0}:{1}".format(self.name, self.buildMode)
 
-  def addLibrary(lib):
+  def addLibrary(self, lib):
     name = "{0}".format(lib)
     if not isinstance(lib, Library):
       raise Exception("project {0} cannot depend on a non-library dependency {1}".format(self, lib))
     if name in self.library:
       raise Exception("project {0} already depends on {1}".format(self.name, name))
     self.library[name] = lib
-
-  def json(self):
-    return json.dumps(self.__dict__, default=lambda o: o.__dict__, indent=2) 
 
 class Library:
   def __init__(self, project, name, majorVersion=0, minorVersion=0, revision=1, gitHubUrl=None, sourceUrl=None):
@@ -133,17 +152,13 @@ class Library:
       return "{0}:v{1}.{2}.{3}:{4}".format(self.name, self.majorVersion,
         self.minorVersion, self.revision, self.sourceUrl)
 
-  def json(self):
-    return json.dumps(self.__dict__, default=lambda o: o.__dict__, indent=2) 
-
 mode = BuildConfig()
 proj = Project("example1")
 liba = Library(proj, "logger", sourceUrl="/abbey.master/src/lib/logger")
 libb = Library(proj, "multiplier", sourceUrl="/abbey.master/src/lib/multiplier")
 liba.addDependency(libb)
 liba.setBuildMode(mode)
+proj.addLibrary(liba)
+proj.addLibrary(libb)
 print(proj)
 print(liba)
-
-obj = liba.json()
-print(obj)
